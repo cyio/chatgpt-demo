@@ -3,6 +3,7 @@ import { generatePayload, parseOpenAIStream } from '@/utils/openAI'
 // #vercel-disable-blocks
 import { fetch, ProxyAgent } from 'undici'
 // #vercel-end
+import cors from '@/utils/cors'
 
 const apiKey = import.meta.env.OPENAI_API_KEY
 const https_proxy = import.meta.env.HTTPS_PROXY
@@ -23,6 +24,11 @@ export const post: APIRoute = async (context) => {
 
   // @ts-ignore
   const response = await fetch('https://api.openai.com/v1/chat/completions', initOptions) as Response
+  const origin = context.request.headers.get('origin')
 
-  return new Response(parseOpenAIStream(response))
+  return cors(
+    context.request,
+    new Response(parseOpenAIStream(response)),
+    { origin: origin.includes('chat') ? origin : null }
+  )
 }
